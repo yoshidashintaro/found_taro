@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>当院を知ったきっかけ集計｜たろうメディカルクリニック</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#f6f7f6;--surface:#ffffff;--fg:#1d2422;--muted:#5f6b67;--line:#dde2df;--accent:#1f6f5c;--chip:#e8eeeb;
+--sans:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141917;--surface:#1c2220;--fg:#e6ebe9;--muted:#9aa8a3;--line:#2f3836;--accent:#5cc2a6;--chip:#25302d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141917;--surface:#1c2220;--fg:#e6ebe9;--muted:#9aa8a3;--line:#2f3836;--accent:#5cc2a6;--chip:#25302d;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:flex;flex-direction:column;gap:28px}
+h1{font-size:24px;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:4px 0 0;font-size:13px}
+.label{font-size:11px;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.kpis{display:flex;flex-wrap:wrap;gap:28px}
+.kpi b{display:block;font-family:var(--mono);font-size:22px;font-weight:500;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--muted)}
+.main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px}
+@media (max-width:820px){.main{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px}
+.pie{position:relative;max-width:440px;width:100%;aspect-ratio:1;margin:0 auto}
+.trend{position:relative;height:340px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:500;color:var(--muted);font-size:12px}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;vertical-align:-1px}
+tfoot td{font-weight:700;border-bottom:none}
+h2{font-size:16px;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px}
+.mini{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+.mini h3{font-size:13px;margin:0 0 2px}.mini p{margin:0 0 8px;font-size:11px;color:var(--muted)}
+.mini .c{position:relative;aspect-ratio:1}
+.mini .top{font-size:11px;color:var(--muted);margin-top:6px}
+.note{font-size:12px;color:var(--muted);max-width:75ch}
+.note li{margin-bottom:4px}
+.lead{max-width:75ch;margin:0 0 14px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>当院を知ったきっかけ集計</h1>
+<p class="sub">たろうメディカルクリニック／<span id="period"></span></p>
+</header>
+<div>
+<div class="label">集計単位</div><div class="chips" id="uchips"></div>
+</div>
+<div>
+<div class="label">年齢層（回答日時点）</div><div class="chips" id="achips"></div>
+</div>
+<div class="kpis" id="kpis"></div>
+<section class="main">
+<div><div class="pie"><canvas id="pie" aria-label="きっかけ別円グラフ"></canvas></div></div>
+<div class="tbl"><table id="tbl"></table></div>
+</section>
+<section>
+<h2 id="minih"></h2>
+<div class="grid" id="minis"></div>
+</section>
+<section>
+<h2>年齢層 × きっかけ（回答数・構成比）</h2>
+<div class="tbl"><table id="matrix"></table></div>
+</section>
+<section>
+<h2 id="trendh"></h2>
+<p class="lead">月ごとの回答数をきっかけ別に積み上げています（年齢層の絞り込みは反映しません）。</p>
+<div class="panel"><div class="trend"><canvas id="trend" aria-label="月別推移"></canvas></div></div>
+<div class="tbl" style="margin-top:16px"><table id="mtbl"></table></div>
+</section>
+<section>
+<h2>問診票別の件数・回答率</h2>
+<div class="tbl"><table id="rates"></table></div>
+</section>
+<section class="note">
+<h2>集計方法</h2>
+<ul id="notes"></ul>
+</section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const D={"period":["2025/08/06","2026/10/21"],"total_rows":5953,"sample_rows":1,"pre_rows":52,"dup_rows":175,"ages":["全年齢","〜19歳","20代","30代","40代","50代","60歳〜","不明"],"units":{"問診票単位":{"ages":{"全年齢":{"n":5725,"answered":5706,"rate":99.7,"cats":[{"name":"ネット検索","count":3207,"pct":56.2},{"name":"紹介","count":1132,"pct":19.8},{"name":"Instagram","count":344,"pct":6},{"name":"Googleマップ","count":200,"pct":3.5},{"name":"ホットペッパー","count":148,"pct":2.6},{"name":"通りがかり","count":126,"pct":2.2},{"name":"LINE","count":109,"pct":1.9},{"name":"駅看板","count":79,"pct":1.4},{"name":"ビル看板","count":44,"pct":0.8},{"name":"口コミ広場","count":20,"pct":0.4},{"name":"X","count":9,"pct":0.2},{"name":"公式HP","count":1,"pct":0},{"name":"その他","count":287,"pct":5}]},"〜19歳":{"n":390,"answered":387,"rate":99.2,"cats":[{"name":"ネット検索","count":200,"pct":51.7},{"name":"紹介","count":135,"pct":34.9},{"name":"Googleマップ","count":8,"pct":2.1},{"name":"通りがかり","count":7,"pct":1.8},{"name":"Instagram","count":5,"pct":1.3},{"name":"ホットペッパー","count":5,"pct":1.3},{"name":"口コミ広場","count":3,"pct":0.8},{"name":"公式HP","count":1,"pct":0.3},{"name":"駅看板","count":1,"pct":0.3},{"name":"LINE","count":1,"pct":0.3},{"name":"その他","count":21,"pct":5.4}]},"20代":{"n":967,"answered":962,"rate":99.5,"cats":[{"name":"ネット検索","count":554,"pct":57.6},{"name":"紹介","count":213,"pct":22.1},{"name":"Googleマップ","count":51,"pct":5.3},{"name":"Instagram","count":31,"pct":3.2},{"name":"ホットペッパー","count":18,"pct":1.9},{"name":"駅看板","count":12,"pct":1.2},{"name":"LINE","count":10,"pct":1},{"name":"通りがかり","count":9,"pct":0.9},{"name":"X","count":5,"pct":0.5},{"name":"口コミ広場","count":5,"pct":0.5},{"name":"ビル看板","count":4,"pct":0.4},{"name":"その他","count":50,"pct":5.2}]},"30代":{"n":1322,"answered":1318,"rate":99.7,"cats":[{"name":"ネット検索","count":809,"pct":61.4},{"name":"紹介","count":214,"pct":16.2},{"name":"Instagram","count":77,"pct":5.8},{"name":"Googleマップ","count":66,"pct":5},{"name":"通りがかり","count":41,"pct":3.1},{"name":"ホットペッパー","count":20,"pct":1.5},{"name":"LINE","count":11,"pct":0.8},{"name":"ビル看板","count":10,"pct":0.8},{"name":"駅看板","count":9,"pct":0.7},{"name":"X","count":3,"pct":0.2},{"name":"口コミ広場","count":1,"pct":0.1},{"name":"その他","count":57,"pct":4.3}]},"40代":{"n":1660,"answered":1657,"rate":99.8,"cats":[{"name":"ネット検索","count":933,"pct":56.3},{"name":"紹介","count":282,"pct":17},{"name":"Instagram","count":139,"pct":8.4},{"name":"ホットペッパー","count":62,"pct":3.7},{"name":"LINE","count":45,"pct":2.7},{"name":"Googleマップ","count":43,"pct":2.6},{"name":"通りがかり","count":38,"pct":2.3},{"name":"駅看板","count":26,"pct":1.6},{"name":"ビル看板","count":14,"pct":0.8},{"name":"口コミ広場","count":8,"pct":0.5},{"name":"X","count":1,"pct":0.1},{"name":"その他","count":66,"pct":4}]},"50代":{"n":1050,"answered":1046,"rate":99.6,"cats":[{"name":"ネット検索","count":558,"pct":53.3},{"name":"紹介","count":199,"pct":19},{"name":"Instagram","count":74,"pct":7.1},{"name":"ホットペッパー","count":33,"pct":3.2},{"name":"LINE","count":31,"pct":3},{"name":"駅看板","count":26,"pct":2.5},{"name":"Googleマップ","count":21,"pct":2},{"name":"通りがかり","count":17,"pct":1.6},{"name":"ビル看板","count":13,"pct":1.2},{"name":"口コミ広場","count":3,"pct":0.3},{"name":"その他","count":71,"pct":6.8}]},"60歳〜":{"n":334,"answered":334,"rate":100,"cats":[{"name":"ネット検索","count":152,"pct":45.5},{"name":"紹介","count":89,"pct":26.6},{"name":"Instagram","count":18,"pct":5.4},{"name":"通りがかり","count":14,"pct":4.2},{"name":"Googleマップ","count":11,"pct":3.3},{"name":"ホットペッパー","count":10,"pct":3},{"name":"LINE","count":10,"pct":3},{"name":"駅看板","count":5,"pct":1.5},{"name":"ビル看板","count":3,"pct":0.9},{"name":"その他","count":22,"pct":6.6}]},"不明":{"n":2,"answered":2,"rate":100,"cats":[{"name":"ネット検索","count":1,"pct":50},{"name":"LINE","count":1,"pct":50}]}},"months":[{"month":"2025/08","n":170,"answered":162,"cats":{"ネット検索":102,"紹介":25,"Instagram":9,"Googleマップ":9,"通りがかり":8,"ホットペッパー":2,"公式HP":1,"駅看板":1,"ビル看板":1,"LINE":1,"X":1,"その他":2}},{"month":"2025/09","n":246,"answered":242,"cats":{"ネット検索":133,"紹介":49,"Instagram":13,"Googleマップ":12,"ホットペッパー":9,"通りがかり":8,"ビル看板":4,"LINE":4,"口コミ広場":4,"駅看板":1,"その他":5}},{"month":"2025/10","n":301,"answered":294,"cats":{"ネット検索":186,"紹介":53,"Instagram":16,"Googleマップ":7,"駅看板":4,"ビル看板":4,"X":3,"ホットペッパー":2,"LINE":2,"通りがかり":1,"口コミ広場":1,"その他":15}},{"month":"2025/11","n":325,"answered":325,"cats":{"ネット検索":191,"紹介":67,"Instagram":27,"ホットペッパー":10,"Googleマップ":8,"LINE":5,"ビル看板":3,"通りがかり":2,"駅看板":2,"X":2,"口コミ広場":1,"その他":7}},{"month":"2025/12","n":425,"answered":425,"cats":{"ネット検索":253,"紹介":77,"Instagram":27,"Googleマップ":13,"通りがかり":13,"ホットペッパー":11,"駅看板":4,"ビル看板":4,"LINE":4,"口コミ広場":1,"その他":18}},{"month":"2026/01","n":412,"answered":412,"cats":{"ネット検索":235,"紹介":92,"Instagram":20,"Googleマップ":16,"ホットペッパー":11,"通りがかり":10,"ビル看板":4,"駅看板":3,"LINE":3,"その他":18}},{"month":"2026/02","n":482,"answered":482,"cats":{"ネット検索":277,"紹介":90,"Instagram":33,"ホットペッパー":16,"Googleマップ":13,"通りがかり":13,"駅看板":11,"LINE":6,"ビル看板":2,"口コミ広場":2,"その他":19}},{"month":"2026/03","n":473,"answered":473,"cats":{"ネット検索":268,"紹介":101,"Instagram":28,"Googleマップ":14,"駅看板":10,"ホットペッパー":8,"通りがかり":7,"LINE":4,"口コミ広場":2,"ビル看板":1,"その他":30}},{"month":"2026/04","n":433,"answered":433,"cats":{"ネット検索":224,"紹介":106,"Googleマップ":21,"Instagram":19,"ホットペッパー":13,"LINE":12,"通りがかり":10,"ビル看板":5,"駅看板":4,"その他":19}},{"month":"2026/05","n":567,"answered":567,"cats":{"ネット検索":286,"紹介":118,"Instagram":42,"ホットペッパー":23,"Googleマップ":18,"通りがかり":18,"LINE":13,"駅看板":11,"口コミ広場":2,"ビル看板":1,"その他":35}},{"month":"2026/06","n":402,"answered":402,"cats":{"ネット検索":232,"紹介":81,"Instagram":28,"通りがかり":10,"LINE":10,"Googleマップ":7,"ホットペッパー":7,"駅看板":7,"ビル看板":1,"その他":19}},{"month":"2026/07","n":395,"answered":395,"cats":{"ネット検索":217,"紹介":72,"Instagram":25,"Googleマップ":18,"LINE":12,"駅看板":8,"通りがかり":7,"ビル看板":7,"ホットペッパー":4,"口コミ広場":2,"その他":23}},{"month":"2026/08","n":384,"answered":384,"cats":{"ネット検索":208,"紹介":81,"ホットペッパー":15,"Instagram":13,"Googleマップ":11,"LINE":11,"通りがかり":6,"駅看板":6,"口コミ広場":3,"ビル看板":1,"X":1,"その他":28}},{"month":"2026/09","n":417,"answered":417,"cats":{"ネット検索":235,"紹介":73,"Instagram":23,"Googleマップ":18,"LINE":13,"ホットペッパー":11,"通りがかり":7,"駅看板":4,"ビル看板":3,"X":1,"口コミ広場":1,"その他":28}},{"month":"2026/10","n":293,"answered":293,"cats":{"ネット検索":160,"紹介":47,"Instagram":21,"Googleマップ":15,"LINE":9,"ホットペッパー":6,"通りがかり":6,"駅看板":3,"ビル看板":3,"X":1,"口コミ広場":1,"その他":21}}]},"患者単位（初回）":{"ages":{"全年齢":{"n":4385,"answered":4369,"rate":99.6,"cats":[{"name":"ネット検索","count":2507,"pct":57.4},{"name":"紹介","count":883,"pct":20.2},{"name":"Instagram","count":241,"pct":5.5},{"name":"Googleマップ","count":156,"pct":3.6},{"name":"ホットペッパー","count":115,"pct":2.6},{"name":"通りがかり","count":95,"pct":2.2},{"name":"駅看板","count":56,"pct":1.3},{"name":"LINE","count":55,"pct":1.3},{"name":"ビル看板","count":34,"pct":0.8},{"name":"口コミ広場","count":14,"pct":0.3},{"name":"X","count":6,"pct":0.1},{"name":"公式HP","count":1,"pct":0},{"name":"その他","count":206,"pct":4.7}]},"〜19歳":{"n":329,"answered":327,"rate":99.4,"cats":[{"name":"ネット検索","count":171,"pct":52.3},{"name":"紹介","count":110,"pct":33.6},{"name":"Googleマップ","count":8,"pct":2.4},{"name":"Instagram","count":5,"pct":1.5},{"name":"ホットペッパー","count":5,"pct":1.5},{"name":"通りがかり","count":5,"pct":1.5},{"name":"口コミ広場","count":3,"pct":0.9},{"name":"公式HP","count":1,"pct":0.3},{"name":"駅看板","count":1,"pct":0.3},{"name":"LINE","count":1,"pct":0.3},{"name":"その他","count":17,"pct":5.2}]},"20代":{"n":765,"answered":760,"rate":99.3,"cats":[{"name":"ネット検索","count":429,"pct":56.4},{"name":"紹介","count":178,"pct":23.4},{"name":"Googleマップ","count":44,"pct":5.8},{"name":"Instagram","count":24,"pct":3.2},{"name":"ホットペッパー","count":17,"pct":2.2},{"name":"駅看板","count":9,"pct":1.2},{"name":"通りがかり","count":7,"pct":0.9},{"name":"LINE","count":7,"pct":0.9},{"name":"口コミ広場","count":4,"pct":0.5},{"name":"ビル看板","count":3,"pct":0.4},{"name":"X","count":2,"pct":0.3},{"name":"その他","count":36,"pct":4.7}]},"30代":{"n":993,"answered":990,"rate":99.7,"cats":[{"name":"ネット検索","count":601,"pct":60.7},{"name":"紹介","count":161,"pct":16.3},{"name":"Instagram","count":55,"pct":5.6},{"name":"Googleマップ","count":55,"pct":5.6},{"name":"通りがかり","count":29,"pct":2.9},{"name":"ホットペッパー","count":14,"pct":1.4},{"name":"ビル看板","count":10,"pct":1},{"name":"駅看板","count":7,"pct":0.7},{"name":"LINE","count":7,"pct":0.7},{"name":"X","count":3,"pct":0.3},{"name":"口コミ広場","count":1,"pct":0.1},{"name":"その他","count":47,"pct":4.7}]},"40代":{"n":1219,"answered":1216,"rate":99.8,"cats":[{"name":"ネット検索","count":729,"pct":60},{"name":"紹介","count":204,"pct":16.8},{"name":"Instagram","count":89,"pct":7.3},{"name":"ホットペッパー","count":47,"pct":3.9},{"name":"Googleマップ","count":32,"pct":2.6},{"name":"通りがかり","count":30,"pct":2.5},{"name":"駅看板","count":19,"pct":1.6},{"name":"LINE","count":16,"pct":1.3},{"name":"ビル看板","count":8,"pct":0.7},{"name":"口コミ広場","count":4,"pct":0.3},{"name":"X","count":1,"pct":0.1},{"name":"その他","count":37,"pct":3}]},"50代":{"n":815,"answered":812,"rate":99.6,"cats":[{"name":"ネット検索","count":456,"pct":56.2},{"name":"紹介","count":156,"pct":19.2},{"name":"Instagram","count":50,"pct":6.2},{"name":"ホットペッパー","count":26,"pct":3.2},{"name":"通りがかり","count":16,"pct":2},{"name":"駅看板","count":16,"pct":2},{"name":"LINE","count":16,"pct":2},{"name":"Googleマップ","count":12,"pct":1.5},{"name":"ビル看板","count":10,"pct":1.2},{"name":"口コミ広場","count":2,"pct":0.2},{"name":"その他","count":52,"pct":6.4}]},"60歳〜":{"n":262,"answered":262,"rate":100,"cats":[{"name":"ネット検索","count":120,"pct":45.8},{"name":"紹介","count":74,"pct":28.2},{"name":"Instagram","count":18,"pct":6.9},{"name":"通りがかり","count":8,"pct":3.1},{"name":"LINE","count":7,"pct":2.7},{"name":"ホットペッパー","count":6,"pct":2.3},{"name":"Googleマップ","count":5,"pct":1.9},{"name":"駅看板","count":4,"pct":1.5},{"name":"ビル看板","count":3,"pct":1.1},{"name":"その他","count":17,"pct":6.5}]},"不明":{"n":2,"answered":2,"rate":100,"cats":[{"name":"ネット検索","count":1,"pct":50},{"name":"LINE","count":1,"pct":50}]}},"months":[{"month":"2025/08","n":160,"answered":152,"cats":{"ネット検索":96,"紹介":24,"Googleマップ":8,"通りがかり":8,"Instagram":7,"ホットペッパー":2,"公式HP":1,"駅看板":1,"ビル看板":1,"LINE":1,"X":1,"その他":2}},{"month":"2025/09","n":234,"answered":230,"cats":{"ネット検索":126,"紹介":48,"Instagram":13,"Googleマップ":11,"ホットペッパー":9,"通りがかり":7,"LINE":4,"ビル看板":3,"口コミ広場":3,"駅看板":1,"その他":5}},{"month":"2025/10","n":282,"answered":278,"cats":{"ネット検索":176,"紹介":51,"Instagram":14,"Googleマップ":7,"駅看板":4,"ビル看板":4,"X":3,"ホットペッパー":2,"通りがかり":1,"LINE":1,"口コミ広場":1,"その他":14}},{"month":"2026/06","n":261,"answered":261,"cats":{"ネット検索":157,"紹介":52,"Instagram":12,"通りがかり":8,"LINE":7,"ホットペッパー":6,"駅看板":5,"Googleマップ":4,"ビル看板":1,"その他":9}},{"month":"2026/05","n":377,"answered":377,"cats":{"ネット検索":196,"紹介":81,"Instagram":23,"ホットペッパー":15,"Googleマップ":13,"通りがかり":10,"LINE":8,"駅看板":7,"ビル看板":1,"口コミ広場":1,"その他":22}},{"month":"2025/11","n":297,"answered":297,"cats":{"ネット検索":172,"紹介":64,"Instagram":25,"ホットペッパー":10,"Googleマップ":7,"LINE":4,"ビル看板":3,"通りがかり":2,"駅看板":2,"X":1,"口コミ広場":1,"その他":6}},{"month":"2025/12","n":391,"answered":391,"cats":{"ネット検索":236,"紹介":72,"Instagram":25,"Googleマップ":13,"通りがかり":12,"ホットペッパー":9,"ビル看板":3,"LINE":3,"駅看板":2,"口コミ広場":1,"その他":15}},{"month":"2026/01","n":370,"answered":370,"cats":{"ネット検索":210,"紹介":89,"Instagram":17,"Googleマップ":12,"ホットペッパー":11,"通りがかり":9,"ビル看板":3,"駅看板":2,"LINE":2,"その他":15}},{"month":"2026/02","n":398,"answered":398,"cats":{"ネット検索":236,"紹介":73,"Instagram":25,"ホットペッパー":13,"Googleマップ":11,"通りがかり":10,"駅看板":7,"LINE":4,"ビル看板":1,"口コミ広場":1,"その他":17}},{"month":"2026/03","n":363,"answered":363,"cats":{"ネット検索":204,"紹介":79,"Instagram":19,"Googleマップ":12,"ホットペッパー":8,"駅看板":6,"通りがかり":5,"LINE":3,"口コミ広場":2,"ビル看板":1,"その他":24}},{"month":"2026/04","n":311,"answered":311,"cats":{"ネット検索":172,"紹介":70,"Googleマップ":14,"Instagram":11,"ホットペッパー":11,"通りがかり":10,"ビル看板":4,"駅看板":3,"LINE":2,"その他":14}},{"month":"2026/07","n":258,"answered":258,"cats":{"ネット検索":149,"紹介":43,"Instagram":15,"Googleマップ":10,"駅看板":8,"通りがかり":4,"ビル看板":4,"LINE":3,"ホットペッパー":2,"口コミ広場":2,"その他":18}},{"month":"2026/08","n":245,"answered":245,"cats":{"ネット検索":133,"紹介":56,"Googleマップ":9,"Instagram":8,"ホットペッパー":8,"LINE":5,"駅看板":4,"通りがかり":2,"ビル看板":1,"口コミ広場":1,"その他":18}},{"month":"2026/09","n":269,"answered":269,"cats":{"ネット検索":153,"紹介":53,"Instagram":16,"Googleマップ":13,"ホットペッパー":5,"LINE":4,"通りがかり":3,"駅看板":2,"ビル看板":2,"X":1,"その他":17}},{"month":"2026/10","n":169,"answered":169,"cats":{"ネット検索":91,"紹介":28,"Googleマップ":12,"Instagram":11,"ホットペッパー":4,"通りがかり":4,"LINE":4,"駅看板":2,"ビル看板":2,"口コミ広場":1,"その他":10}}]}},"referral":{"total":1132,"named":229},"forms":[{"form":"問診票","n":5725,"a":5706}]};
+const COLORS={'ネット検索':'#2f6fb0','紹介':'#d98a1e','Instagram':'#c2477a','Googleマップ':'#1f8a70','ホットペッパー':'#d4553a','公式HP':'#2aa6b8','通りがかり':'#7d6b4f','駅看板':'#b8a03a','ビル看板':'#8a7a3a','LINE':'#3fa34d','X':'#5a5f66','口コミ広場':'#6b8e23','その他':'#9aa3a0'};
+const col=n=>COLORS[n]||'#8d9693';
+const units=Object.keys(D.units),ages=D.ages;
+let U=units[0],A='全年齢';
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt=n=>n.toLocaleString();
+document.getElementById('period').textContent=`回答日 ${D.period[0]}〜${D.period[1]}`;
+function chips(id,list,get,set){const el=document.getElementById(id);el.innerHTML='';list.forEach(v=>{const b=document.createElement('button');b.className='chip';b.textContent=v;b.setAttribute('aria-pressed',v===get());b.onclick=()=>{set(v);render()};el.appendChild(b)})}
+const pctLabel={id:'pctLabel',afterDatasetsDraw(c,args,opt){const {ctx}=c;const ds=c.data.datasets[0];const meta=c.getDatasetMeta(0);const tot=ds.data.reduce((a,b)=>a+b,0);ctx.save();ctx.font=`500 ${opt.size||12}px ${css('--sans')}`;ctx.textAlign='center';ctx.textBaseline='middle';
+meta.data.forEach((arc,i)=>{const p=ds.data[i]/tot;if(p<(opt.min||.04))return;const pos=arc.tooltipPosition();ctx.fillStyle='#fff';ctx.fillText(opt.small?`${(p*100).toFixed(0)}%`:`${(p*100).toFixed(1)}%`,pos.x,pos.y-(opt.small?0:8));if(!opt.small){ctx.font=`400 11px ${css('--mono')}`;ctx.fillText(fmt(ds.data[i])+'件',pos.x,pos.y+8);ctx.font=`500 12px ${css('--sans')}`}});ctx.restore()}};
+let pie,trend,minis=[];
+function render(){
+chips('uchips',units,()=>U,v=>U=v);chips('achips',ages,()=>A,v=>A=v);
+const UA=D.units[U].ages,s=UA[A];
+const unitWord=U.startsWith('患者')?'対象患者数':'対象問診票数';
+document.getElementById('kpis').innerHTML=`<div class="kpi"><b>${fmt(s.n)}</b><span>${unitWord}</span></div><div class="kpi"><b>${fmt(s.answered)}</b><span>回答数</span></div><div class="kpi"><b>${s.rate.toFixed(1)}%</b><span>回答率</span></div>`+(U==='問診票単位'&&A==='全年齢'?`<div class="kpi"><b>${fmt(D.referral.named)}<small style="font-size:13px;color:var(--muted)"> / ${fmt(D.referral.total)}</small></b><span>「紹介」のうち紹介者名の記入あり</span></div>`:'');
+const labels=s.cats.map(c=>c.name),data=s.cats.map(c=>c.count);
+if(pie)pie.destroy();
+pie=new Chart(document.getElementById('pie'),{type:'pie',data:{labels,datasets:[{data,backgroundColor:labels.map(col),borderColor:css('--surface'),borderWidth:2}]},
+options:{maintainAspectRatio:false,plugins:{legend:{display:false},pctLabel:{min:.04},tooltip:{callbacks:{label:c=>`${c.label}：${fmt(c.raw)}件（${(c.raw/s.answered*100).toFixed(1)}%）`}}}},plugins:[pctLabel]});
+document.getElementById('tbl').innerHTML=`<thead><tr><th>きっかけ</th><th>回答数</th><th>構成比</th></tr></thead><tbody>${s.cats.map(c=>`<tr><td><span class="sw" style="background:${col(c.name)}"></span>${c.name}</td><td class="num">${fmt(c.count)}</td><td class="num">${c.pct.toFixed(1)}%</td></tr>`).join('')}</tbody><tfoot><tr><td>合計</td><td class="num">${fmt(s.answered)}</td><td class="num">100.0%</td></tr></tfoot>`;
+// 年齢層別の小円グラフ
+document.getElementById('minih').textContent=`年齢層別（${U}）`;
+minis.forEach(m=>m.destroy());minis=[];const g=document.getElementById('minis');g.innerHTML='';
+ages.filter(a=>a!=='全年齢'&&a!=='不明'&&UA[a].n).forEach(a=>{const t=UA[a];const div=document.createElement('div');div.className='mini';
+const top=t.cats.filter(c=>c.name!=='その他')[0];
+div.innerHTML=`<h3>${a}</h3><p>回答数 ${fmt(t.answered)}件・回答率 ${t.rate.toFixed(1)}%</p><div class="c"><canvas></canvas></div><div class="top">${top?`最多：${top.name} ${top.pct.toFixed(1)}%`:'回答なし'}</div>`;g.appendChild(div);
+if(!t.answered)return;
+minis.push(new Chart(div.querySelector('canvas'),{type:'pie',data:{labels:t.cats.map(c=>c.name),datasets:[{data:t.cats.map(c=>c.count),backgroundColor:t.cats.map(c=>col(c.name)),borderColor:css('--surface'),borderWidth:1}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false},pctLabel:{min:.08,small:true,size:11},tooltip:{callbacks:{label:c=>`${c.label}：${c.raw}件（${(c.raw/t.answered*100).toFixed(1)}%）`}}}},plugins:[pctLabel]}))});
+// 年齢層×きっかけ
+const cats=UA['全年齢'].cats.map(c=>c.name);const ag=ages.filter(a=>UA[a].n);
+let h=`<thead><tr><th>きっかけ</th>${ag.map(a=>`<th colspan="2">${a}</th>`).join('')}</tr><tr><th></th>${ag.map(()=>`<th>件数</th><th>構成比</th>`).join('')}</tr></thead><tbody>`;
+cats.forEach(c=>{h+=`<tr><td><span class="sw" style="background:${col(c)}"></span>${c}</td>`+ag.map(a=>{const x=UA[a].cats.find(z=>z.name===c);return `<td class="num">${x?fmt(x.count):0}</td><td class="num">${x?x.pct.toFixed(1):'0.0'}%</td>`}).join('')+'</tr>'});
+h+=`</tbody><tfoot><tr><td>回答数（回答率）</td>${ag.map(a=>{const t=UA[a];return `<td class="num">${fmt(t.answered)}</td><td class="num">${t.rate.toFixed(1)}%</td>`}).join('')}</tr></tfoot>`;
+document.getElementById('matrix').innerHTML=h;
+// 月別推移
+const M=D.units[U].months;
+document.getElementById('trendh').textContent=`月別推移（${U}）`;
+if(trend)trend.destroy();
+trend=new Chart(document.getElementById('trend'),{type:'bar',data:{labels:M.map(m=>m.month),datasets:cats.map(c=>({label:c,data:M.map(m=>m.cats[c]||0),backgroundColor:col(c)}))},
+options:{maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false},ticks:{color:css('--muted')}},y:{stacked:true,grid:{color:css('--line')},ticks:{color:css('--muted')}}},
+plugins:{legend:{position:'bottom',labels:{color:css('--fg'),boxWidth:10,boxHeight:10,font:{size:11}}},tooltip:{mode:'index',filter:i=>i.raw>0}}}});
+let mh=`<thead><tr><th>きっかけ</th>${M.map(m=>`<th>${m.month.slice(2)}</th>`).join('')}</tr></thead><tbody>`;
+cats.forEach(c=>{mh+=`<tr><td><span class="sw" style="background:${col(c)}"></span>${c}</td>${M.map(m=>`<td class="num">${m.cats[c]||0}</td>`).join('')}</tr>`});
+mh+=`</tbody><tfoot><tr><td>回答数</td>${M.map(m=>`<td class="num">${fmt(m.answered)}</td>`).join('')}</tr></tfoot>`;
+document.getElementById('mtbl').innerHTML=mh;
+}
+// 問診票別
+(function(){let h=`<thead><tr><th>問診票名称</th><th>件数</th><th>回答数</th><th>回答率</th></tr></thead><tbody>`;
+D.forms.forEach(f=>h+=`<tr><td>${f.form}</td><td class="num">${fmt(f.n)}</td><td class="num">${fmt(f.a)}</td><td class="num">${(f.a/f.n*100).toFixed(1)}%</td></tr>`);
+document.getElementById('rates').innerHTML=h+'</tbody>'})();
+document.getElementById('notes').innerHTML=[
+'「当院を知ったきっかけ」の3列（AB・AD・AE列。時期により記入列が異なる）を1つの設問として統合（単一回答）。',
+'回答率＝回答あり件数 ÷ 対象件数。構成比＝きっかけ別回答数 ÷ 回答あり件数。',
+`問診票単位：同一患者・同日・同回答の重複送信（${fmt(D.dup_rows)}件）は1件として集計。患者単位（初回）：患者ごとに期間内で最初の回答を採用。`,
+`設問が回答され始めた ${D.period[0]} より前の問診票（${fmt(D.pre_rows)}件）とサンプル問診（${D.sample_rows}件）は対象外。`,
+'「ホームページ」は「公式HP」、「インスタグラム」は「Instagram」と表記。年齢は生年月日から回答日時点で算出。'
+].map(t=>`<li>${t}</li>`).join('');
+render();
+</script>
+</body>
+</html>
